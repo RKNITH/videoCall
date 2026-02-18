@@ -11,6 +11,7 @@ const socket = io(import.meta.env.VITE_BACKEND_URL, {
 
 const ContextProvider = ({ children }) => {
     const [stream, setStream] = useState(null);
+    const [remoteStream, setRemoteStream] = useState(null); // Added to track remote stream
     const [me, setMe] = useState('');
     const [call, setCall] = useState({});
     const [callAccepted, setCallAccepted] = useState(false);
@@ -24,25 +25,26 @@ const ContextProvider = ({ children }) => {
     const userVideo = useRef();
     const connectionRef = useRef();
 
-    // --- FIX FOR DEPLOYED VIDEO: The Stream Watcher ---
+    // Attach local stream
     useEffect(() => {
         if (stream && myVideo.current) {
             myVideo.current.srcObject = stream;
         }
     }, [stream]);
 
+    // --- NEW: Attach remote stream whenever the video element appears ---
     useEffect(() => {
-        // Request Camera Access
+        if (callAccepted && !callEnded && remoteStream && userVideo.current) {
+            userVideo.current.srcObject = remoteStream;
+        }
+    }, [callAccepted, callEnded, remoteStream]);
+
+    useEffect(() => {
         navigator.mediaDevices.getUserMedia({ video: true, audio: true })
             .then((currentStream) => {
                 setStream(currentStream);
-                if (myVideo.current) {
-                    myVideo.current.srcObject = currentStream;
-                }
             })
-            .catch((err) => {
-                console.error("Camera access denied:", err);
-            });
+            .catch((err) => console.error("Camera access denied:", err));
 
         socket.on('me', (id) => setMe(id));
 
@@ -64,10 +66,8 @@ const ContextProvider = ({ children }) => {
             socket.emit('answerCall', { signal: data, to: call.from });
         });
 
-        peer.on('stream', (remoteStream) => {
-            if (userVideo.current) {
-                userVideo.current.srcObject = remoteStream;
-            }
+        peer.on('stream', (currentRemoteStream) => {
+            setRemoteStream(currentRemoteStream); // Store in state
         });
 
         peer.signal(call.signal);
@@ -88,10 +88,8 @@ const ContextProvider = ({ children }) => {
             });
         });
 
-        peer.on('stream', (remoteStream) => {
-            if (userVideo.current) {
-                userVideo.current.srcObject = remoteStream;
-            }
+        peer.on('stream', (currentRemoteStream) => {
+            setRemoteStream(currentRemoteStream); // Store in state
         });
 
         socket.on('callAccepted', (signal) => {
