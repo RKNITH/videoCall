@@ -5,7 +5,10 @@ import Peer from 'simple-peer/simplepeer.min.js';
 const SocketContext = createContext();
 
 // Connect to the socket server
-const socket = io(import.meta.env.VITE_BACKEND_URL);
+const socket = io(import.meta.env.VITE_BACKEND_URL, {
+    transports: ['websocket'],
+    withCredentials: true
+});
 
 const ContextProvider = ({ children }) => {
     const [stream, setStream] = useState(null);
