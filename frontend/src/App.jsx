@@ -47,7 +47,7 @@ const App = () => {
       </main>
 
       <footer className="py-6 text-center text-slate-600 text-xs uppercase tracking-widest border-t border-slate-800">
-        &copy; 2026 V-Connect Protocol • Built with MERN
+        &copy; 2026 V-Connect Protocol • Built by Raviranjan
       </footer>
     </div>
   );
